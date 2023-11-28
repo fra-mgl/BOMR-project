@@ -46,7 +46,7 @@ def reconstruct_path(cameFrom, current):
         current=cameFrom[current]
     return total_path
 
-def A_Star(start, goal, h, coords, occupancy_grid, movement_type="4N", max_val=17):
+def A_Star(start, goal, h, coords, occupancy_grid, movement_type="4N", max_val=max_val):
     """
     A* for 2D occupancy grid. Finds a path from start to goal.
     h is the heuristic function. h(n) estimates the cost to reach goal from node n.
