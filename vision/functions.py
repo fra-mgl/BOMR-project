@@ -1,9 +1,7 @@
 import cv2 as cv
 import numpy as np
-from time import sleep
-import asyncio
-import detection, utils, constants
-from VisionObjects import Thymio, create_VisionObject, VisionObjectsTypes, obstacle_color_text, goal_color_text, target_color_text
+from vision import detection, utils, constants
+from vision.VisionObjects import Thymio, create_VisionObject, VisionObjectsTypes, obstacle_color_text, goal_color_text, target_color_text
 
 
 
@@ -25,7 +23,7 @@ def recognition(grid):
     # extract obstacles
     contours = detection.colored_object_extraction(grid, obstacle_color_text)
     if contours is None:
-        utils.print_error("Error in module.main.recognition: no obstacle found")
+        utils.print_error("Error in vision.functions.recognition: no obstacle found")
         return False, None, None, None
     for c in contours:
         obstacles.append(create_VisionObject(c, VisionObjectsTypes.OBSTACLE))
@@ -33,7 +31,7 @@ def recognition(grid):
     # extract target
     contours = detection.colored_object_extraction(grid, target_color_text)
     if contours is None:
-        utils.print_error("Error in module.main.recognition: no target found")
+        utils.print_error("Error in vision.functions.recognition: no target found")
         return False, None, None, None
     for c in contours:
         targets.append(create_VisionObject(c, VisionObjectsTypes.TARGET))
@@ -41,7 +39,7 @@ def recognition(grid):
     # extract goal
     contours = detection.colored_object_extraction(grid, goal_color_text)
     if contours is None:
-        utils.print_error("Error in module.main.recognition: no goal found")
+        utils.print_error("Error in vision.functions.recognition: no goal found")
         return False, None, None, None
     for c in contours:
         goal.append(create_VisionObject(c, VisionObjectsTypes.GOAL))
@@ -70,7 +68,7 @@ def perspective(source, grid_corners):
 def thymio_recognition(env):
     """
     recognition of thymio
-    :param env: environment
+    :param env: environment (image from camera)
     :return: Thymio object
     """
     arucoDict = cv.aruco.Dictionary_get(cv.aruco.DICT_5X5_1000)
@@ -82,7 +80,7 @@ def thymio_recognition(env):
     print(ids)
     print("------------------")
     if ids is None:
-        utils.print_error("Error in module.test.thymio_recognition: no markers found")
+        utils.print_error("Error in vision.functions.thymio_recognition: no markers found")
         return False, None
     thymio = None
     for id_list in ids:  # each id is inside a list
@@ -94,44 +92,12 @@ def thymio_recognition(env):
             thymio = Thymio(pos_int[0])
 
     if thymio is None:
-        utils.print_error("Error in module.test.thymio_recognition: Thymio not found")
+        utils.print_error("Error in vision.functions.thymio_recognition: Thymio not found")
         return False, None
 
     thymio.pose_estimation(env.shape[1], env.shape[0])
 
     return True, thymio
-
-
-def complete_flow(source):
-    """
-    complete flow of the program
-    :param source: environment
-    :return out: output image
-    :return state: Thymio's pose
-    :return obs_grid: obstacles grid
-    :return targets: list of targets
-    :return goal: goal
-    """
-    # grid extraction
-    grid_corners, _, _ = detection.grid_extraction(source)
-    # perspective transform
-    grid = perspective(source, grid_corners)
-    out = grid.copy()  # output image
-    utils.display_image("Grid", grid)
-
-    # recognition
-    obstacles, targets, goal = recognition(grid)
-    # thymio
-    thymio = thymio_recognition(grid)
-
-    # display results
-    out = utils.draw_on_image(out, obstacles, True)
-    out = utils.draw_on_image(out, targets, True)
-    out = utils.draw_on_image(out, goal, True)
-    out = thymio.draw_thymio(out)
-    s, o, t, g = prepare_output(thymio, obstacles, targets, goal[0])
-
-    return out, s, o, t, g
 
 
 def prepare_output(thymio, obs, tar, g):
@@ -162,17 +128,17 @@ def prepare_output(thymio, obs, tar, g):
 
     return state, obs_grid, targets, goal
 
-# -----------------------------------------------------------------------------------------------
-def vision_init(source):
+
+def env_init(source):
     """
-    vision initialization: grid extraction, perspective transform and object recognition
+    environment initialization: grid extraction, perspective transform and object recognition
     :param source: image from camera
     :return flag: Successful flag
     :return grid: grid
     :return obs: list of obstacles
     :return obs_grid: occupation grid (1 if obstacle, 0 if free)
     :return targets: list of targets
-    :return goal: goal
+    :return goal: list of goals
     """
     grid_corners, _, flag = detection.grid_extraction(source)
     if not flag:
@@ -195,21 +161,57 @@ def vision_init(source):
         targets.append(t.center_grid)
 
     # goal
-    goal = g.center_grid
+    goal = []
+    for gg in g:
+        goal.append(gg.center_grid)
 
     return flag, grid, obs, obs_grid, targets, goal
 
 
-def get_thymio(grid):
+# -----------------------------------------------------------------------------------------------
+#                           TO BE CALLED FROM OUTSIDE THE MODULE
+# -----------------------------------------------------------------------------------------------
+
+def vision_init(cap):
+    """
+    initialize vision
+    :param cap: camera object
+    :return flag: True if vision is initialized, False otherwise
+    :return other variables: see env_init (above)
+    """
+    flag = False
+
+    for _ in range(10):
+            _, env = cap.read()
+            flag, grid, obs, obs_grid, targets, goal = env_init(env)
+            if flag:
+                break
+
+    if not flag:
+        print("Error in vision.functions.vision_init: cannot initialize vision")
+        return False, None, None, None, None, None
+    return flag, grid, obs, obs_grid, targets, goal
+
+
+def get_thymio(cap):
     """
     get Thymio's pose
-    :param grid: envirnoment
+    :param cap: camera object
+    :return flag: True if Thymio is found, False otherwise
+    :return thymio: Thymio object
     :return state: [x, y, theta]
     """
-    flag, thymio = thymio_recognition(grid)
+    flag = False
+
+    for _ in range(10):
+        env = cap.read()
+        flag, thymio = thymio_recognition(env)
+        if flag == True:
+            break
+
     if not flag:
-        return flag, None
-    return True, thymio
+        return False, None, None
+    return True, thymio, thymio.state
 
 
 def visualize_data(source, thymio, obstacles, obs_grid, targets, goal):
@@ -243,30 +245,3 @@ def visualize_data(source, thymio, obstacles, obs_grid, targets, goal):
 
     return out_img, out_text
 
-
-# ---------- main ----------
-async def main():
-    cap = cv.VideoCapture(0)
-
-    # initialization
-    for i in range(10):
-        ret, env = cap.read()
-        flag, grid, obs, obs_grid, targets, goal = vision_init(env)
-        if flag:
-            break
-
-    if not flag:
-        print("Error in module.main.main: cannot initialize vision")
-        assert 0
-
-    # retrieve thymio's pose
-    for i in range(10):
-        _, thymio = get_thymio(grid)
-        visualize_data(grid, thymio, obs, obs_grid, targets, goal)
-
-    cap.release()
-
-
-
-if __name__ == '__main__':
-    main()

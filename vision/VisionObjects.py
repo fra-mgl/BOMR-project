@@ -2,8 +2,8 @@ import numpy as np
 import cv2 as cv
 from math import floor
 from enum import Enum
-from module.utils import print_error
-from module.constants import grid_height_cells, grid_width_cells
+from vision.utils import print_error
+from vision.constants import grid_height_cells, grid_width_cells
 
 # Define an enumeration class called Color
 class VisionObjectsTypes(Enum):

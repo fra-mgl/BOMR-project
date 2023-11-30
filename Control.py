@@ -3,7 +3,8 @@ from tdmclient import aw
 from tdmclient import ClientAsync
 import math
 
-class Control_tymio(node,client):
+# class Control_tymio(node,client):
+class Control_tymio():
     def __init__(self,node,client):
         print("init")
         self.node = node
@@ -30,7 +31,7 @@ class Control_tymio(node,client):
     #Do we need other sensors ?
     #Not quite sure to understand the node.v. part
     async def get_sensors(self):
-         print("inside before")
+        print("inside before")
         aw(self.node.wait_for_variable({
             "motor.left.speed",
             "motor.right.speed",

@@ -1,8 +1,8 @@
 import numpy as np
 import cv2 as cv
-from module.VisionObjects import VisionObject, create_VisionObject, general_color_text, VisionObjectsTypes
-from module.utils import print_error, display_image, draw_on_image
-from module.constants import morph_kernel_dim
+from vision.VisionObjects import VisionObject, create_VisionObject, general_color_text, VisionObjectsTypes
+from vision.utils import print_error, display_image, draw_on_image
+from vision.constants import morph_kernel_dim
 
 corner_color = general_color_text
 
