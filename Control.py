@@ -3,8 +3,8 @@ from tdmclient import aw
 from tdmclient import ClientAsync
 import math
 
-# class Control_tymio(node,client):
-class Control_tymio():
+class Control(object):
+
     def __init__(self,node,client):
         print("init")
         self.node = node
@@ -16,6 +16,7 @@ class Control_tymio():
                                   #to the right angle to consider we are in the right direction
         self.kp = 0               #Value to determine : weight for forward speed control S1-15
         self.kangle = 0           #Value to determine : weight for angle control S1-15
+        
     
     async def sync(self):
         print("in sync")
@@ -30,19 +31,31 @@ class Control_tymio():
         
     #Do we need other sensors ?
     #Not quite sure to understand the node.v. part
+
     async def get_sensors(self):
-        print("inside before")
-        aw(self.node.wait_for_variable({
-            "motor.left.speed",
-            "motor.right.speed",
-            "prox.horizontal",
-        }))
-        print("insod")
-        speed_left = self.node.v.motor.right.speed*self.speed_conversion
-        speed_right = self.node.v.motor.left.speed*self.speed_conversion
-        print(speed_left)
-        return speed_left, speed_right
-    
+        #print("before await")
+        #await self.node.wait_for_variables({"motor.left.speed"})
+        #print("after await")
+        #speed_left = self.node.v.motor.left.speed
+        #speed_left_2c = self.node.motor.left.speed
+        #speed_right = self.node.v.motor.left.speed*self.speed_conversion
+        #print(speed_left_2c)
+        #return speed_left
+        await self.node.wait_for_variables({"prox.horizontal","motor.left.speed","motor.right.speed"})
+        #print(self.node.v.motor.left.speed)
+        #print(self.node.v.motor.right.speed)
+        #print(list(self.node.v.prox.horizontal))
+        #Might be good to take mean of sensors ?
+        for i in range(10):
+            #print(list(self.node.v.prox.horizontal))
+            #print(self.node.v.motor.left.speed)
+            #print(self.node.v.motor.right.speed)
+            await self.client.sleep(0.2)
+        ls = self.node.v.motor.left.speed
+        rs = self.node.v.motor.right.speed
+        prox_sensor = list(self.node.v.prox.horizontal)
+        return ls, rs, prox_sensor
+ 
     async def following_path(self, pos, angle, checkpoint):
         #We want to follow the path if we are not at the checkpoint
         #x = pos and y = checkpoint
@@ -68,23 +81,25 @@ class Control_tymio():
         
     
     def set_motors(self, correction,state):
-        aw(self.node.wait_for_variable({
-                    "motor.right.speed",
-                    "motor.left.speed",
-                    "prox.horizontal",
-                    }))
+        #aw(self.node.wait_for_variable({
+        #            "motor.right.speed",
+        #            "motor.left.speed",
+        #            "prox.horizontal",
+        #            }))
         if state == "turn":
+            print("Turning")
             motors = {
                 "motor.left.target": [self.node.v.motor.left.speed - correction],
                 "motor.right.target": [self.node.v.motor.right.speed + correction]
             }
         elif state == "forward":
-            motors == {
+            print("Going forward")
+            motors = {
                 "motor.left.target": [50],
-                "motor.right.target": [50]
+                "motor.right.target": [50],
             }
-            pass
-        self.node.send_set_variables(motors)
+            aw(self.node.set_variables(motors))
+
     
     def angle_between(v1, v2):
         dot_product = sum((a * b) for a, b in zip(v1, v2))
