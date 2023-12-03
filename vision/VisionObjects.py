@@ -162,8 +162,8 @@ class Thymio():
     def compute_grid_coordinates(self, grid_width_pixel, grid_height_pixel):
         y = round(self.center_pixel[0] / grid_width_pixel * grid_width_cells, 3)
         x = round(self.center_pixel[1] / grid_height_pixel * grid_height_cells, 3)
-        self.center_grid = [x, y]
-        self.state = [x, y, self.state[2]]
+        self.center_grid = [y, x]
+        self.state = [y, x, self.state[2]]
 
     def compute_theta(self):
         """

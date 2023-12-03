@@ -206,7 +206,13 @@ def get_thymio(cap):
 
     for _ in range(10):
         _, env = cap.read()
-        flag, thymio = thymio_recognition(env)
+        grid_corners, _, flag = detection.grid_extraction(env)
+        if not flag:
+            return flag, None, None
+        # perspective transform
+        grid = perspective(env, grid_corners)
+        utils.display_image("test", grid)
+        flag, thymio = thymio_recognition(grid)
         if flag == True:
             break
 
