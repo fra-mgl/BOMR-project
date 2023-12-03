@@ -224,7 +224,7 @@ def get_thymio(cap):
         utils.print_error("Error in vision.functions.get_thymio: cannot find Thymio")
         return False, None, None
     
-    return True, thymio, thymio.state
+    return True, thymio, (thymio.state[0], thymio.state[1], thymio.state[2])
 
 
 def visualize_data(source, thymio, obstacles, obs_grid, targets, goal):
