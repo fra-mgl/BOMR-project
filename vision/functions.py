@@ -183,6 +183,7 @@ def vision_init(cap):
 
     for _ in range(10):
             _, env = cap.read()
+            utils.display_image("Test", env)
             flag, grid, obs, obs_grid, targets, goal = env_init(env)
             if flag:
                 break
@@ -204,7 +205,7 @@ def get_thymio(cap):
     flag = False
 
     for _ in range(10):
-        env = cap.read()
+        _, env = cap.read()
         flag, thymio = thymio_recognition(env)
         if flag == True:
             break
