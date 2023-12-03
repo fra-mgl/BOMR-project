@@ -189,7 +189,7 @@ def vision_init(cap):
                 break
 
     if not flag:
-        print("Error in vision.functions.vision_init: cannot initialize vision")
+        utils.print_error("Error in vision.functions.vision_init: cannot initialize vision")
         return False, None, None, None, None, None
     return flag, grid, obs, obs_grid, targets, goal
 
@@ -202,23 +202,29 @@ def get_thymio(cap):
     :return thymio: Thymio object
     :return state: [x, y, theta]
     """
-    flag = False
+    flag_grid = False
+    flag_thymio = False
 
     for _ in range(10):
         _, env = cap.read()
-        grid_corners, _, flag = detection.grid_extraction(env)
-        if not flag:
-            return flag, None, None
+        grid_corners, _, flag_grid = detection.grid_extraction(env)
+        if not flag_grid:
+            continue
         # perspective transform
         grid = perspective(env, grid_corners)
         utils.display_image("test", grid)
-        flag, thymio = thymio_recognition(grid)
-        if flag == True:
+        flag_thymio, thymio = thymio_recognition(grid)
+        if flag_thymio == True:
             break
 
-    if not flag:
+    if not flag_grid:
+        utils.print_error("Error in vision.functions.get_thymio: cannot find grid")
         return False, None, None
-    return True, thymio, thymio.state
+    if not flag_thymio:
+        utils.print_error("Error in vision.functions.get_thymio: cannot find Thymio")
+        return False, None, None
+    
+    return True, thymio, (thymio.state[0], thymio.state[1], thymio.state[2])
 
 
 def visualize_data(source, thymio, obstacles, obs_grid, targets, goal):

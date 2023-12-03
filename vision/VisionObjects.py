@@ -72,7 +72,7 @@ class VisionObject:
         # use floor to select cell
         y = floor(self.center_pixel[0] / grid_width_pixel * grid_width_cells)
         x = floor(self.center_pixel[1] / grid_height_pixel * grid_height_cells)
-        self.center_grid = [x, y]
+        self.center_grid = [y, x]  # coordinates are flipped to be compliant with the reference frame
 
     def generate_label(self):
         text = type(self).__name__ + ", " + str(self.center_grid)
@@ -162,7 +162,7 @@ class Thymio():
     def compute_grid_coordinates(self, grid_width_pixel, grid_height_pixel):
         y = round(self.center_pixel[0] / grid_width_pixel * grid_width_cells, 3)
         x = round(self.center_pixel[1] / grid_height_pixel * grid_height_cells, 3)
-        self.center_grid = [y, x]
+        self.center_grid = [y, x]   # coordinates are flipped to be compliant with the reference frame
         self.state = [y, x, self.state[2]]
 
     def compute_theta(self):
