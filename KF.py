@@ -1,3 +1,5 @@
+import numpy as np
+
 class KalmanFilter(object):
     def _init_(self, dim_x=4, dim_z=2, dt=0.1, dim_u=0):
         self.dim_x = dim_x
