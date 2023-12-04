@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
 from vision import detection, utils, constants
+from time import sleep
 from vision.VisionObjects import Thymio, create_VisionObject, VisionObjectsTypes, obstacle_color_text, goal_color_text, target_color_text
 
 
@@ -74,11 +75,11 @@ def thymio_recognition(env):
     arucoDict = cv.aruco.Dictionary_get(cv.aruco.DICT_5X5_1000)
     arucoParams = cv.aruco.DetectorParameters_create()
     positions, ids, rejected = cv.aruco.detectMarkers(env, arucoDict, parameters=arucoParams)
-    print("------------------")
-    print("thymio_recognition: markers found")
-    print("IDS:")
-    print(ids)
-    print("------------------")
+    # print("------------------")
+    # print("thymio_recognition: markers found")
+    # print("IDS:")
+    # print(ids)
+    # print("------------------")
     if ids is None:
         utils.print_error("Error in vision.functions.thymio_recognition: no markers found")
         return False, None
@@ -154,6 +155,7 @@ def env_init(source):
     obs_grid = np.zeros((constants.grid_height_cells, constants.grid_width_cells))
     for o in obs:
         obs_grid[o.center_grid[0], o.center_grid[1]] = 1
+    
 
     # targets
     targets = []
@@ -183,7 +185,7 @@ def vision_init(cap):
 
     for _ in range(10):
             _, env = cap.read()
-            utils.display_image("Test", env)
+            # utils.display_image("", env)
             flag, grid, obs, obs_grid, targets, goal = env_init(env)
             if flag:
                 break
@@ -209,10 +211,10 @@ def get_thymio(cap):
         _, env = cap.read()
         grid_corners, _, flag_grid = detection.grid_extraction(env)
         if not flag_grid:
+            # sleep(0.2)
             continue
         # perspective transform
         grid = perspective(env, grid_corners)
-        utils.display_image("test", grid)
         flag_thymio, thymio = thymio_recognition(grid)
         if flag_thymio == True:
             break
@@ -224,7 +226,7 @@ def get_thymio(cap):
         utils.print_error("Error in vision.functions.get_thymio: cannot find Thymio")
         return False, None, None
     
-    return True, thymio, (thymio.state[0], thymio.state[1], thymio.state[2])
+    return True, thymio, (thymio.state[0]+0.5, thymio.state[1], thymio.state[2])
 
 
 def visualize_data(source, thymio, obstacles, obs_grid, targets, goal):

@@ -35,11 +35,11 @@ class Control(object):
 
     async def get_sensors(self):
         await self.node.wait_for_variables({"prox.horizontal","motor.left.speed","motor.right.speed"})
-        for i in range(10):
-            #print(list(self.node.v.prox.horizontal))
-            #print(self.node.v.motor.left.speed)
-            #print(self.node.v.motor.right.speed)
-            await self.client.sleep(0.2)
+        # for i in range(10):
+        #     #print(list(self.node.v.prox.horizontal))
+        #     #print(self.node.v.motor.left.speed)
+        #     #print(self.node.v.motor.right.speed)
+        #     await self.client.sleep(0.2)
         ls = self.node.v.motor.left.speed
         rs = self.node.v.motor.right.speed
         prox_sensor = list(self.node.v.prox.horizontal)
@@ -60,7 +60,7 @@ class Control(object):
         else:
             vector_to_checkpoint = (checkpoint[0] - pos[0], checkpoint[1] - pos[1])
             #Need to calculate the angle between the vector to the checkpoint and the x axis
-            v_axis = (1,0)
+            v_axis = (0,1)
             #angle_to_checkpoint = math.degrees(math.atan2((checkpoint[1]-v_axis[1]),(checkpoint[0]-v_axis[0])))
             angle_to_checkpoint = math.degrees(self.angle_between(v_axis,vector_to_checkpoint))
             print("angle to checkpoints:", angle_to_checkpoint)
@@ -98,6 +98,14 @@ class Control(object):
             }
         print("left speed:", left_fw)
         print("righ speed:", right_fw)
+        aw(self.node.set_variables(motors))
+
+    def set_motors_PID(self, left_speed,right_speed):
+        print("SETTING PID")
+        motors = {
+            "motor.left.target": [round(left_speed)],
+            "motor.right.target": [round(right_speed)],
+        }
         aw(self.node.set_variables(motors))
 
     

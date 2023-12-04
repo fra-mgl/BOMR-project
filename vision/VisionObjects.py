@@ -72,7 +72,7 @@ class VisionObject:
         # use floor to select cell
         y = floor(self.center_pixel[0] / grid_width_pixel * grid_width_cells)
         x = floor(self.center_pixel[1] / grid_height_pixel * grid_height_cells)
-        self.center_grid = [y, x]  # coordinates are flipped to be compliant with the reference frame
+        self.center_grid = [x,y]  # coordinates are flipped to be compliant with the reference frame
 
     def generate_label(self):
         text = type(self).__name__ + ", " + str(self.center_grid)
@@ -162,8 +162,8 @@ class Thymio():
     def compute_grid_coordinates(self, grid_width_pixel, grid_height_pixel):
         y = round(self.center_pixel[0] / grid_width_pixel * grid_width_cells, 3)
         x = round(self.center_pixel[1] / grid_height_pixel * grid_height_cells, 3)
-        self.center_grid = [y, x]   # coordinates are flipped to be compliant with the reference frame
-        self.state = [y, x, self.state[2]]
+        self.center_grid = [x,y]   # coordinates are flipped to be compliant with the reference frame
+        self.state = [x,y, self.state[2]]
 
     def compute_theta(self):
         """
@@ -180,8 +180,17 @@ class Thymio():
         point2 = self.corners[2]
         theta2 = np.arctan2(point1[1] - point2[1], point1[0] - point2[0])
 
+        theta1 = np.rad2deg(theta1)
+        theta2 = np.rad2deg(theta2)
+
+
+        theta1 = fix_theta(theta1)
+        theta2 = fix_theta(theta2)
+
+
+
         theta = (theta1 + theta2) / 2
-        theta = theta * 180 / np.pi  # from rad to deg
+
         return theta
 
     def pose_estimation(self, grid_width_pixel, grid_height_pixel):
@@ -227,3 +236,20 @@ class Thymio():
         cv.arrowedLine(image, self.center_pixel, (int(x), int(y)), self.color, 10)
 
         return image
+
+
+def fix_theta(th):
+
+    th = -th
+
+    if th < -165:
+        th = 180
+
+    new_theta = th + 90
+
+    if new_theta > 180:
+        new_theta -= 360
+    elif new_theta < -180:
+        new_theta += 360  
+
+    return new_theta

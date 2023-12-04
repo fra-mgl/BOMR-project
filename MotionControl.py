@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import math
 
 # PID Controller parameters
-kp = 8.0  # Proportional gain
+kp = 2.0  # Proportional gain
 ki = 0.1  # Integral gain
 kd = 0.01  # Derivative gain
 robot_width = 0.1  # Width between the two wheels
@@ -68,30 +68,22 @@ dt = 0.1  # Time step
 #   The computed angular error
 
 
-async def pid_controller(target_point, position, integral, angle, previous_error, left_speed, right_speed):
-    angle_error = math.atan2(target_point[1] - position[1], target_point[0] - position[0]) - angle
-    proportional = kp * angle_error
-    integral += ki * angle_error
-    derivative = kd * (angle_error - previous_error) / dt
+async def pid_controller(integral, angle, previous_error):
+    proportional = kp * angle//3
+    integral += ki * angle
+    derivative = kd * (angle - previous_error) / dt
     correction = proportional + integral + derivative
-    updated_left_speed = left_speed - correction
-    updated_right_speed = right_speed + correction
-    set_motors(updated_left_speed,updated_right_speed)
-    return integral, angle_error
+    if abs(angle) > 10:
+        updated_left_speed = - np.floor(correction)
+        updated_right_speed = np.floor(correction)
+        turning = True
+    else :
+        updated_left_speed = 60 - np.floor(correction/2)
+        updated_right_speed = 60 + np.floor(correction/2)
+        turning = False
 
-
-def set_motors(self, updated_left_speed,updated_right_speed):
-    #aw(self.node.wait_for_variable({
-    #            "motor.right.speed",
-    #            "motor.left.speed",
-    #            "prox.horizontal",
-    #            }))
-    print("Setting Motors")
-    motors = {
-        "motor.left.target": [updated_left_speed],
-        "motor.right.target": [updated_right_speed],
-    }
-    aw(self.node.set_variables(motors))
+    print("PID: ",updated_left_speed, updated_right_speed)
+    return updated_left_speed,updated_right_speed, integral, angle, turning
 
 
 # Follow the path using PID control with correction
@@ -145,7 +137,3 @@ def follow_path_with_correction(path):  # corresponds to main
 
     plt.legend()
     plt.show()
-
-if __name__ == "__main__":
-    # path_to_follow = generate_l_path()
-    # follow_path_with_correction(path_to_follow)

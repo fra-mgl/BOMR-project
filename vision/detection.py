@@ -105,11 +105,11 @@ def grid_extraction(image):
     arucoDict = cv.aruco.Dictionary_get(cv.aruco.DICT_5X5_1000)
     arucoParams = cv.aruco.DetectorParameters_create()
     positions, ids, rejected = cv.aruco.detectMarkers(image, arucoDict, parameters=arucoParams)
-    print("------------------")
-    print("grid_extraction: markers found")
-    print("IDS:")
-    print(ids)
-    print("------------------")
+    # print("------------------")
+    # print("grid_extraction: markers found")
+    # print("IDS:")
+    # print(ids)
+    # print("------------------")
 
     if ids is None:
         print_error("Error in module.utils.grid_extraction: no markers found")
