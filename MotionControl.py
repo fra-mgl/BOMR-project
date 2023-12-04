@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import math
 
 # PID Controller parameters
-kp = 2.0  # Proportional gain
+kp = 4.0  # Proportional gain
 ki = 0.1  # Integral gain
 kd = 0.01  # Derivative gain
 robot_width = 0.1  # Width between the two wheels
@@ -69,22 +69,28 @@ dt = 0.1  # Time step
 
 
 async def pid_controller(integral, angle, previous_error):
-    proportional = kp * angle//3
+    proportional = kp * angle//2
     integral += ki * angle
     derivative = kd * (angle - previous_error) / dt
     correction = proportional + integral + derivative
-    if abs(angle) > 10:
+    if abs(angle) > 19:
         updated_left_speed = - np.floor(correction)
         updated_right_speed = np.floor(correction)
         turning = True
     else :
-        updated_left_speed = 60 - np.floor(correction/2)
-        updated_right_speed = 60 + np.floor(correction/2)
+        updated_left_speed = 80 - np.floor(correction/2)
+        updated_right_speed = 80 + np.floor(correction/2)
         turning = False
 
     print("PID: ",updated_left_speed, updated_right_speed)
     return updated_left_speed,updated_right_speed, integral, angle, turning
 
+def normalize_angle(alpha):
+    if alpha > 180:
+        alpha -= 360
+    elif alpha < -180:
+        alpha += 360  
+    return alpha
 
 # Follow the path using PID control with correction
 def follow_path_with_correction(path):  # corresponds to main
