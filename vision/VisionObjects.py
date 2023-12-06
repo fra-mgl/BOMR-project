@@ -183,13 +183,21 @@ class Thymio():
         theta1 = np.rad2deg(theta1)
         theta2 = np.rad2deg(theta2)
 
-
+        print("Before: ", theta1, theta2)
         theta1 = fix_theta(theta1)
         theta2 = fix_theta(theta2)
-
-
+        print("After: ", theta1, theta2)
 
         theta = (theta1 + theta2) / 2
+
+        # normalization
+        if theta > 180:
+            theta -= 360
+        elif theta < -180:
+            theta += 360 
+
+        if theta < -165:
+            theta = 180
 
         return theta
 
@@ -242,14 +250,7 @@ def fix_theta(th):
 
     th = -th
 
-    if th < -165:
-        th = 180
-
     new_theta = th + 90
-
-    if new_theta > 180:
-        new_theta -= 360
-    elif new_theta < -180:
-        new_theta += 360  
+     
 
     return new_theta

@@ -82,8 +82,8 @@ async def pid_controller(integral, angle, previous_error):
             updated_right_speed = 350
         turning = True
     else :
-        updated_left_speed = 80 - np.floor(correction/2)
-        updated_right_speed = 80 + np.floor(correction/2)
+        updated_left_speed = 80 - np.floor(correction/1.3)
+        updated_right_speed = 80 + np.floor(correction/1.3)
         turning = False
 
     return updated_left_speed,updated_right_speed, integral, angle, turning

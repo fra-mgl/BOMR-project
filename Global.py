@@ -46,7 +46,7 @@ def reconstruct_path(cameFrom, current):
         current=cameFrom[current]
     return total_path
 
-def A_Star(start, goal, h, coords, occupancy_grid, movement_type="4N", max_val=17):
+def A_Star(start, goal, h, coords, occupancy_grid, max_val_x = 17, max_val_y = 17,  movement_type="4N"):
     """
     A* for 2D occupancy grid. Finds a path from start to goal.
     h is the heuristic function. h(n) estimates the cost to reach goal from node n.
@@ -56,7 +56,7 @@ def A_Star(start, goal, h, coords, occupancy_grid, movement_type="4N", max_val=1
     :param movement: select between 4-connectivity ('4N') and 8-connectivity ('8N', default)
     :return: a tuple that contains: (the resulting path in meters, the resulting path in data array indices)
     """
-    
+    print("Coords inside Astar: ", coords)
     # -----------------------------------------
     # DO NOT EDIT THIS PORTION OF CODE
     # -----------------------------------------
@@ -65,9 +65,13 @@ def A_Star(start, goal, h, coords, occupancy_grid, movement_type="4N", max_val=1
     # [start, goal] form is :[(0, 0), (43, 33)]
     for point in [start, goal]:
         #In 2D we have 4 points
-        for coord in point: #going to go threw : 0 0 43 33
-            #coord should be > or = 0 and inferiot to max_val if not assert raises an AssertionError
-            assert coord>=0 and coord<max_val, "start or end goal not contained in the map"
+        print("Point: ", point)
+        assert point[0]>=0 and point[0]<max_val_x, "x-start or end goal not contained in the map"
+        assert point[1]>=0 and point[1]<max_val_y, "y-start or end goal not contained in the map"
+        # for coord in point: #going to go threw : 0 0 43 33
+        #     #coord should be > or = 0 and inferiot to max_val if not assert raises an AssertionError
+        #     assert coord>=0 and coord<max_val_x, "x-start or end goal not contained in the map"
+        #     assert coord>=0 and coord<max_val_y, "y-start or end goal not contained in the map"
     
     # check if start and goal nodes correspond to free spaces
     if occupancy_grid[start[0], start[1]]: #if the starting point is an occupied cell aka wall
@@ -130,7 +134,7 @@ def A_Star(start, goal, h, coords, occupancy_grid, movement_type="4N", max_val=1
         for dx, dy, deltacost in movements:
             
             neighbor = (current[0]+dx, current[1]+dy) #cree une liste des 4 ou 8 voisins selon le choix
-            
+            print("Neighbor: ", neighbor)
             # if the node is not in the map, skip
             if (neighbor[0] >= occupancy_grid.shape[0]) or (neighbor[1] >= occupancy_grid.shape[1]) or (neighbor[0] < 0) or (neighbor[1] < 0):
                 continue
