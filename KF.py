@@ -1,7 +1,7 @@
 import numpy as np
 
 class KalmanFilter(object):
-    def __init__(self, dim_x=4, dim_z=2, dt=0.05, dim_u=0):
+    def __init__(self, dim_x=4, dim_z=2, dt=0.08, dim_u=0):
         self.dim_x = dim_x
         self.dim_z = dim_z
         self.dim_u = dim_u
@@ -23,25 +23,42 @@ class KalmanFilter(object):
 
     def compute_x_y_speed(self, left_motor_speed, right_motor_speed, angle,time_difference):
         # Compute the linear speed of the robot
-        delta = abs(left_motor_speed - right_motor_speed)
-        if delta < 5:
-            print("-------------Delta found-------------")
-            left_motor_speed = right_motor_speed
+        # delta = abs(left_motor_speed - right_motor_speed)
+        # if delta < 10:
+        #     print("-------------Delta found-------------")
+        #     left_motor_speed = right_motor_speed
         robot_wheel_width = 5
-        linear_speed = (left_motor_speed + right_motor_speed) / 2.0
-        angular_speed = (left_motor_speed - right_motor_speed) / robot_wheel_width
+        linear_speed = (left_motor_speed + right_motor_speed) * self.speed_conv_factor / 2.0
+        angular_speed = -(left_motor_speed - right_motor_speed) * self.speed_conv_factor / (10*robot_wheel_width)
         delta_angle = angular_speed * time_difference
-        angle = angle + delta_angle
-        new_direction_vector = np.array([np.cos(round(np.radians(angle))), np.sin(round(np.radians(angle)))])
+        angle = angle + np.degrees(delta_angle)
+        # if abs(delta_angle) < 0.10: delta_angle = 0
+        rad_angle = np.radians(angle)
+        #rad_angle = rad_angle + delta_angle
+        print("-------------delta ", np.degrees(delta_angle))
+        #print("-------------cos ", np.cos(round(np.radians(angle))))
+        cosine = np.cos(rad_angle)
+        if abs(cosine) < 0.15: cosine = 0
+        sine = np.sin(rad_angle)
+        if abs(sine) < 0.3: sine = 0
 
-        x_speed = linear_speed*new_direction_vector[0] * self.speed_conv_factor
-        y_speed = linear_speed*new_direction_vector[1] * self.speed_conv_factor
+        new_direction_vector = np.array([cosine, sine])
+
+        x_speed = linear_speed*new_direction_vector[0]
+        y_speed = linear_speed*new_direction_vector[1] 
         speed =  [x_speed,y_speed]
 
+        print("-------------New dir:", new_direction_vector)
+        # angle = np.degrees(rad_angle)
         return speed,new_direction_vector,angle 
          
 
-    def predict(self, x_est_prev, P_est_prev, time_diff, speed, direction):
+    def predict(self, x_est_prev, P_est_prev, speed, direction, time_difference):
+        dt = time_difference/5.5
+        self.A = np.array([[1, 0, dt, 0],
+                        [0, 1, 0, dt],
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1]])  # state transition matrix
         self.x_est = np.dot(self.A, x_est_prev)
         self.P_est = np.dot(np.dot(self.A, P_est_prev), self.A.T)
         self.P_est = self.P_est + self.Q if type(self.Q) != type(None) else self.P_est

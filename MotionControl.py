@@ -69,13 +69,17 @@ dt = 0.1  # Time step
 
 
 async def pid_controller(integral, angle, previous_error):
-    proportional = kp * angle//2
+    proportional = kp * angle/2
     integral += ki * angle
     derivative = kd * (angle - previous_error) / dt
     correction = proportional + integral + derivative
     if abs(angle) > 30:
-        updated_left_speed = - np.floor(correction)
-        updated_right_speed = np.floor(correction)
+        if (abs(correction) < 300) :
+            updated_left_speed = - np.floor(correction)
+            updated_right_speed = np.floor(correction)
+        else :
+            updated_left_speed = -350
+            updated_right_speed = 350
         turning = True
     else :
         updated_left_speed = 80 - np.floor(correction/2)
