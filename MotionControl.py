@@ -4,7 +4,7 @@ import math
 
 # PID Controller parameters
 kp = 4.0  # Proportional gain
-ki = 0.1  # Integral gain
+ki = 0.04  # Integral gain
 kd = 0.01  # Derivative gain
 robot_width = 0.1  # Width between the two wheels
 
@@ -73,7 +73,7 @@ async def pid_controller(integral, angle, previous_error):
     integral += ki * angle
     derivative = kd * (angle - previous_error) / dt
     correction = proportional + integral + derivative
-    if abs(angle) > 19:
+    if abs(angle) > 30:
         updated_left_speed = - np.floor(correction)
         updated_right_speed = np.floor(correction)
         turning = True
@@ -82,7 +82,6 @@ async def pid_controller(integral, angle, previous_error):
         updated_right_speed = 80 + np.floor(correction/2)
         turning = False
 
-    print("PID: ",updated_left_speed, updated_right_speed)
     return updated_left_speed,updated_right_speed, integral, angle, turning
 
 def normalize_angle(alpha):

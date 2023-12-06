@@ -183,7 +183,7 @@ def vision_init(cap):
     """
     flag = False
 
-    for _ in range(10):
+    for _ in range(constants.REP):
             _, env = cap.read()
             # utils.display_image("", env)
             flag, grid, obs, obs_grid, targets, goal = env_init(env)
@@ -207,7 +207,7 @@ def get_thymio(cap):
     flag_grid = False
     flag_thymio = False
 
-    for _ in range(10):
+    for _ in range(constants.REP):
         _, env = cap.read()
         grid_corners, _, flag_grid = detection.grid_extraction(env)
         if not flag_grid:
