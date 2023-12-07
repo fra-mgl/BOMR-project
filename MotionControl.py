@@ -4,7 +4,7 @@ from IPython.display import display
 
 
 # PID Controller parameters
-kp = 3.0  # Proportional gain
+kp = 2.0  # Proportional gain
 ki = 0.04  # Integral gain
 kd = 0.01  # Derivative gain
 robot_width = 0.1  # Width between the two wheels
@@ -34,8 +34,8 @@ class Control(object):
             "motor.left.target": [round(left_speed)],
             "motor.right.target": [round(right_speed)],
         }
-        aw(self.node.set_variables(motors))
-
+        aw(self.node.set_variables(motors))\
+    
     # --------- LEDs AND SOUND --------- #
     def set_LEDs(self, color):
         if color == "red":
@@ -64,18 +64,18 @@ def pid_controller(integral, angle, previous_error,dt):
         derivative = 0
     correction = proportional + integral + derivative
     # if angle is big enough, correction is more aggressive (meaning we need to perform a turn)
-    if abs(angle) > 70:
-        # if (abs(correction) < 350) :
-        updated_left_speed = - np.floor(correction)
-        updated_right_speed = np.floor(correction)
-        # else :
-        #     # cropping speed
-        #     updated_left_speed = -350
-        #     updated_right_speed = 350
+    if abs(angle) > 30:
+        if (abs(correction) < 300) :
+            updated_left_speed = - np.floor(correction)
+            updated_right_speed = np.floor(correction)
+        else :
+            # cropping speed
+            updated_left_speed = -350
+            updated_right_speed = 350
         turning = True
     else :
-        updated_left_speed = 80 - np.floor(correction)
-        updated_right_speed = 80 + np.floor(correction)
+        updated_left_speed = 80 - np.floor(correction/1.3)
+        updated_right_speed = 80 + np.floor(correction/1.3)
         turning = False
 
     return updated_left_speed,updated_right_speed, integral, angle, turning
@@ -89,3 +89,6 @@ def normalize_angle(alpha):
     elif alpha < -180:
         alpha += 360  
     return alpha
+
+
+

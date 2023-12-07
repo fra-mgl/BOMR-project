@@ -120,9 +120,6 @@ def handle_target_behind(special_step, sens, k, thymio,obstacle_coordinates,posi
     else :
         sens = "Left"
     
-    # Flag to track direction during obstacle navigation
-    Left = False
-
     # Loop through obstacle coordinates
     for point in obstacle_coordinates:
         # Adjust direction depending on the orientation
@@ -149,7 +146,6 @@ def handle_target_behind(special_step, sens, k, thymio,obstacle_coordinates,posi
     if special_step == 0:
         if not Left:
             sens = switch_sens(sens)
-    
         rotate_robot(90, 100, switch_sens(sens),thymio)
         forward_robot(100, Short_distance, thymio)
         rotate_robot(90, 100, sens,thymio)
@@ -227,8 +223,6 @@ async def local_nav(thymio):
 
     # Initialize obstacle flag
     obstacle = False
-    #w_l = [0,  20, -20, -20, 0, 0, 0]
-    # w_r = [0, -20, -20,  20, 0, 0,  0]
     # Scale factors for sensors and constant factor
     sensor_scale = 200
     
@@ -287,7 +281,6 @@ def obstacle_function(path, position, angle, thymio,obstacle_coordinates):
     special_cases = [x_s,y_s]
     k = 2
     time.sleep(0.2)
-    obstacle_position = path[:,0]
 
     # Check if Thymio is behind the target
     if (np.floor(position[axe]) == path[axe][1]):
