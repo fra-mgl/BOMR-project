@@ -2,7 +2,10 @@ import time
 import math
 import numpy as np
 
-Rotate_Factor = 0.35
+Speed_Factor = 0.35
+Long_distance = 275
+Short_distance = 130
+Threshold_detection = 20
 
 def switch_sens(sens):
     """
@@ -48,11 +51,11 @@ def rotate_robot(angle_degrees, rotation_speed, sens, thymio):
     wheel_circumference = 2 * math.pi * (wheel_distance / 2)
     distance_to_travel = (angle_radians / (2 * math.pi)) * wheel_circumference
     # Adjust motor speed
-    if (sens == "Left"): 
+    if (sens == "Right"): 
         motor_speed = rotation_speed
-        motor_left_target = motor_speed - 5
+        motor_left_target = motor_speed - 18
         motor_right_target = -motor_speed 
-    if (sens == "Right"):
+    if (sens == "Left"):
         motor_speed = rotation_speed
         motor_left_target = -motor_speed
         motor_right_target = motor_speed + 3
@@ -60,179 +63,288 @@ def rotate_robot(angle_degrees, rotation_speed, sens, thymio):
     # set motor speed
     thymio.set_motors_PID(motor_left_target, motor_right_target)
     # waiting to travel the computer distance
-    time.sleep(distance_to_travel / (motor_speed*Rotate_Factor))
+    time.sleep(distance_to_travel / (motor_speed*Speed_Factor))
 
-# function to make the robot go forward
-def forward_robot(motor_speed,thymio):
+
+def forward_robot(motor_speed, distance, thymio):
+    """
+    Moves the Thymio robot forward at a specified motor speed for a duration of 3.6 seconds.
+    The left and right motors are set to the given speed, and the Thymio robot is then instructed
+    to move forward. The function pauses for the specified duration to allow the robot to complete
+    its forward movement before returning.
+
+    :param motor_speed: The speed at which the robot should move forward.
+    :param thymio: An instance of the Thymio robot class providing motor control methods.
+    :return: None
+    """
     motor_left_target = motor_speed
     motor_right_target = motor_speed
     thymio.set_motors_PID(motor_left_target, motor_right_target) 
-    time.sleep(3.6)
+    time_to_travel = distance / (motor_speed*Speed_Factor)
 
-# function that define the speed at the beginning 
-def beginning_robot(motor_speed,thymio):
-    motor_left_target = motor_speed
-    motor_right_target = motor_speed
-    thymio.set_motors_PID(motor_left_target,motor_right_target)
+    # Wait for the robot to travel the specified distance
+    time.sleep(time_to_travel)
+
     
-def handle_obstacle_behind(path, special_cases,axe, special_step):
+def determine_special_path(path, special_cases,axe, special_step):
+    """
+    Determines a special step based on conditions in the given path and special cases.
+    :param path: The path representation, likely a list or data structure.
+    :param special_cases: A list of special cases for comparison.
+    :param axe: The specific axis to consider in the path.
+    :param special_step: The variable to determine the special step, initially provided as an argument.
+    :return: The updated value of special_step.
+    """
     if path[axe][2] == special_cases[axe][0]:
        special_step= 1
     elif path[axe][2] == special_cases[axe][1]:
        special_step= 2
     return special_step
 
-def handle_obstacle_left(position, obstacle_position):
-    return position[0] > obstacle_position[0]
-
-def handle_obstacle_right(position, obstacle_position):
-    return position[0] < obstacle_position[0]
-
-def navigate_obstacle(special_step, sens, k, thymio,obstacle_cooredinates,position,orientation,axe):
+def navigate_obstacle(special_step, sens, k, thymio,obstacle_coordinates,position,orientation,axe):
+    """
+    Navigates the Thymio robot around an obstacle based on specified conditions.
+    :param special_step: A value indicating a special step condition.
+    :param sens: The initial direction of movement ('Right' or 'Left').
+    :param k: A counter variable, likely tracking iterations.
+    :param thymio: An instance of the Thymio robot class providing motor control methods.
+    :param obstacle_coordinates: Coordinates of the detected obstacle.
+    :param position: The current position of the Thymio robot.
+    :param orientation: The current orientation of the Thymio robot.
+    :param axe: The specific axis to consider in the path.
+    :return: Updated counter variable 'k' and the state after navigating the obstacle.
+    """
+    # Check for special step condition
     if (special_step == 1):
-        sens = "Left"
-    else :
         sens = "Right"
-    for point in obstacle_cooredinates:
+    else :
+        sens = "Left"
+    
+    # Flag to track direction during obstacle navigation
+    Left = False
+
+    # Loop through obstacle coordinates
+    for point in obstacle_coordinates:
+        # Adjust direction depending on the orientation
         if orientation == -90 or  orientation == 0:
             sens = switch_sens(sens)
+
+        # Check if Thymio is next to the obstacle
         if (np.floor(position[axe]) == (point[axe]-1)) and (np.floor(position[switch_axe(axe)]) == (point[switch_axe(axe)])):
             Left = True
             rotate_robot(90, 100, sens,thymio)
-            forward_robot(100,thymio)
+            forward_robot(100, Short_distance, thymio)
             rotate_robot(90, 100, switch_sens(sens),thymio)
-            forward_robot(100,thymio)
-            time.sleep(4.5)
+            forward_robot(100, Long_distance, thymio)
+
+        # Check if Thymio is on the other side of the obstacle
         if (np.floor(position[axe]) == (point[axe]+1)) and (np.floor(position[switch_axe(axe)]) == (point[switch_axe(axe)])):
             Left = False
-            rotate_robot(00, 100, switch_sens(sens),thymio)
-            forward_robot(100,thymio)
+            rotate_robot(100, 100, switch_sens(sens),thymio)
+            forward_robot(100, Short_distance, thymio)
             rotate_robot(90, 100, sens,thymio)
-            forward_robot(100,thymio)
-            time.sleep(4.5)
+            forward_robot(100, Long_distance, thymio)
+
+    # Check for special step condition
     if special_step == 0:
         if not Left:
             sens = switch_sens(sens)
+    
         rotate_robot(90, 100, switch_sens(sens),thymio)
-        forward_robot(100,thymio)
+        forward_robot(100, Short_distance, thymio)
         rotate_robot(90, 100, sens,thymio)
-        state = "orientation"
+
+        state = "orientation" # Update state
+
     else:
         k += 1
-        state = "orientation"
+        state = "orientation" # Update state
+
     return k, state
 
 def handle_target_left(thymio):
-    rotate_robot(90, 100, "Right",thymio)
-    forward_robot(100,thymio)
+    """
+    Handles the left-side target encountered by the Thymio robot.
+    :param thymio: An instance of the Thymio robot class providing motor control methods.
+    :return: The updated state after handling the left-side target.
+    """
     rotate_robot(90, 100, "Left",thymio)
-    forward_robot(100,thymio)
-    state = "orientation"
+    forward_robot(100, Short_distance, thymio)
+    rotate_robot(90, 100, "Right",thymio)
+    forward_robot(100, Short_distance, thymio)
+
+    state = "orientation" # Update state
+
     return state
 
 def handle_target_right(thymio):
-    rotate_robot(90, 100, "Left",thymio)
-    forward_robot(100,thymio)
+    """
+    Handles the right-side target encountered by the Thymio robot.
+    :param thymio: An instance of the Thymio robot class providing motor control methods.
+    :return: The updated state after handling the right-side target.
+    """
     rotate_robot(90, 100, "Right",thymio)
-    forward_robot(100,thymio)
-    state = "orientation"
+    forward_robot(100, Short_distance, thymio)
+    rotate_robot(90, 100, "Left",thymio)
+    forward_robot(100, Short_distance, thymio)
+
+    state = "orientation" # Update state
+
     return state
 
-def handle_target_state(path, k, axe, thymio):
+def handle_final_orientation(path, k, axe, thymio):
+    """
+    Handles the final orientation adjustment for the Thymio robot based on the provided path and iteration count.
+    :param path: The path representation, likely a list or data structure.
+    :param k: The current iteration count.
+    :param axe: The specific axis to consider in the path.
+    :param thymio: An instance of the Thymio robot class providing motor control methods.
+    :return: The updated state after handling the final orientation.
+    """
+    # Check if the current iteration aligns with the desired final orientation
     if path[axe][k] == path[axe][1]:
         state = "end"
+    # If the iteration count is less than the desired final orientation, rotate the robot left
     elif path[axe][1] > path[axe][k]:
-        rotate_robot(90, 100, "Right",thymio)
-        state = "end"
-    elif path[axe][1] < path[axe][k]:
         rotate_robot(90, 100, "Left",thymio)
         state = "end"
+    # If the iteration count is greater than the desired final orientation, rotate the robot right
+    elif path[axe][1] < path[axe][k]:
+        rotate_robot(90, 100, "Right",thymio)
+        state = "end"
+    
     return state
     
 async def local_nav(thymio):
+    """
+    Performs local navigation for the Thymio robot based on proximity sensor readings.
+    Reads proximity sensor values, scales them, and checks for obstacles.
+    If an obstacle is detected (based on a threshold), stops the robot's motors.
+    :param thymio: An instance of the Thymio robot class providing sensor readings and motor control.
+    :return: A boolean indicating whether an obstacle is detected during local navigation.
+    """
     global prox_horizontal
+
+    # Initialize obstacle flag
     obstacle = False
-    w_l = [0,  20, -20, -20, 0, 0, 0]
-    w_r = [0, -20, -20,  20, 0, 0,  0]
+    #w_l = [0,  20, -20, -20, 0, 0, 0]
+    # w_r = [0, -20, -20,  20, 0, 0,  0]
     # Scale factors for sensors and constant factor
     sensor_scale = 200
     
-    
+    # Placeholder variables for sensor readings
     y = [0,0]
     x = [0,0,0,0,0,0,0]
-    _,_,proxi,= await thymio.get_sensors()
+
+    # Get proximity sensor readings from the Thymio robot
+    _,_,prox,= await thymio.get_sensors()
         
     for i in range(len(x)):
-        # Get and scale inputs
-        x[i] = proxi[i] // sensor_scale
-        if (x[2] > 12):
+        # Get and scale proximity sensor readings
+        x[i] = prox[i] // sensor_scale
+
+        # Check if obstacle is detected based on the front proximity sensor
+        if (x[2] > Threshold_detection):
             obstacle = True 
+            thymio.set_motors_PID(0, 0) # Stop the robot's motors if an obstacle is detected
+
+
     return obstacle
     
-def obstacle_function(path, position, angle, thymio,obstacle_cooredinates):
+def obstacle_function(path, position, angle, thymio,obstacle_coordinates):
+    """
+    Handles obstacle detection and navigation for the Thymio robot.
+    Detects the presence of obstacles based on the robot's position and orientation.
+    Initiates obstacle navigation strategies, including special cases, and updates the robot's state.
+    :param path: The path representation, likely a list or data structure.
+    :param position: The current position of the Thymio robot.
+    :param angle: The current orientation angle of the Thymio robot.
+    :param thymio: An instance of the Thymio robot class providing motor control methods.
+    :param obstacle_coordinates: Coordinates of the detected obstacle.
+    :return: The status indicating the current step of the path after the obstacle handling process.
+    """
+    # Initialize variables
     special_step = 0
     status = 0
     orientation = 0
+
+    # Check if Thymio is facing forward or backward
     if ((angle < -170) or (angle > 170) or (-10 < angle < 10)):
         if ((angle < -170) or (angle > 170)): orientation = 180
         else: orientation = 0
         axe = 1
         x_s=[np.floor(position[0])-2,np.floor(position[0])-2]
         y_s=[np.floor(position[1])+1,np.floor(position[1])-1]
+    
+    # Check if Thymio is facing left or right
     if ((-100 < angle < -80) or (80 < angle < 100)):
         if (-100 < angle < -80): orientation = -90
         else: orientation = 90
         axe = 0
         x_s=[np.floor(position[0])+1,np.floor(position[0])-1]
         y_s=[np.floor(position[1])+2,np.floor(position[1])+2]
+
     special_cases = [x_s,y_s]
     k = 2
     time.sleep(0.2)
     obstacle_position = path[:,0]
-    print("path", path)
-    print("position",position)
-    print("obstacle", obstacle_position)
-    print("comp1", position[axe])
-    print("comp2", path[axe][1])
+
+    # Check if Thymio is behind the target
     if (np.floor(position[axe]) == path[axe][1]):
-        special_step = handle_obstacle_behind(path, special_cases,axe, special_step)
-        state = "obstacle_behind"
+        special_step = determine_special_path(path, special_cases,axe, special_step)
         if(special_step == 1) or (special_step == 2):
             status = 4
         else:
             status = 3
+        state = "obstacle_behind"
+
+    # Check if Thymio is to the left of the target
     if (np.floor(position[axe]) > path[axe][1]):
-        handle_obstacle_left(position, obstacle_position)
         state = "obstacle_left"
         status = 3
+
+    # Check if Thymio is to the right of the target
     if (np.floor(position[axe]) < path[axe][1]):
-        handle_obstacle_right(position, obstacle_position)
         state = "obstacle_right"
         status = 3
+
+    # Handle obstacle navigation based on the detected state
     if state == "obstacle_behind":
-        k, state = navigate_obstacle(special_step, "Left", k, thymio,obstacle_cooredinates,position,orientation, axe)
+        k, state = navigate_obstacle(special_step, "Right", k, thymio,obstacle_coordinates,position,orientation, axe)
     if state == "obstacle_left":
         state = handle_target_left(thymio)
     if state == "obstacle_right":
         state = handle_target_right(thymio)
     if state == "orientation":
-        state = handle_target_state(path, k,axe, thymio)
+        state = handle_final_orientation(path, k,axe, thymio)
+
+    # Check if the obstacle handling process is complete
     if state == "end":
         time.sleep(0.2)
         k = 1
         return status
     
 def obstacle_extraction(obs_grid):
+    """
+    Extracts the coordinates of ones (obstacles) and zeros (free spaces) from an occupancy grid.
+    Iterates through each element of the grid, categorizing coordinates based on the presence of obstacles (1) or free spaces (0).
+    Returns a list of coordinates representing the locations of obstacles in the grid.
+    :param obs_grid: The occupancy grid representing the environment with ones (obstacles) and zeros (free spaces).
+    :return: A list of coordinates corresponding to the locations of obstacles in the grid.
+    """
+    # Initialize lists to store coordinates of ones (obstacles) and zeros (free spaces)
     ones_coordinates = []
     zeros_coordinates = []
 
+    # Iterate through each row and column of the occupancy grid
     for row_index, row in enumerate(obs_grid):
         for col_index, value in enumerate(row):
+            # Categorize coordinates based on the presence of obstacles (1) or free spaces (0)
             if value == 1:
                 ones_coordinates.append((row_index, col_index))
             elif value == 0:
                 zeros_coordinates.append((row_index, col_index))
 
-    # Return a dictionary containing the coordinates for ones and zeros
+    # Return a list of coordinates representing the locations of obstacles in the grid
     occupancy_grid = ones_coordinates
     return occupancy_grid
