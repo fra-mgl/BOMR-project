@@ -2,13 +2,22 @@ import time
 import math
 import numpy as np
 
-def switch_sens(sens):
-    if(sens == 1):
-        sens = 2
-    else:
-        sens = 1
-    return sens
+Rotate_Factor = 0.35
 
+def switch_sens(sens):
+    """
+    Switches the direction value between "Left" and "Right". 
+    :param sens: The current direction value ('Left' or 'Right' assumed).
+    :return: The switched direction value.
+    """
+    # Check the current value of 'sens'
+    if sens == "Left":
+        sens = "Right"
+    else:
+        sens = "Left"
+    
+    # Return the updated 'sens' value
+    return sens
 
 def switch_axe(axe):
     if(axe == 0):
@@ -18,6 +27,19 @@ def switch_axe(axe):
     return axe
 
 def rotate_robot(angle_degrees, rotation_speed, sens, thymio):
+    """
+    Rotates the Thymio robot by a specified angle at a given rotation speed and direction.
+    The robot calculates the distance each wheel must travel based on the provided angle.
+    The motor speeds are adjusted depending on the rotation direction ('Left' or 'Right').
+    The Thymio robot is then set to move according to the calculated motor targets, and the function
+    waits for the robot to complete the rotation before returning.
+
+    :param angle_degrees: The desired angle of rotation in degrees.
+    :param rotation_speed: The speed at which the robot should rotate.
+    :param sens: The rotation direction ('Left' or 'Right').
+    :param thymio: An instance of the Thymio robot class providing motor control methods.
+    :return: None
+    """
     # convert the angle to radians
     angle_radians = math.radians(angle_degrees)
 
@@ -26,11 +48,11 @@ def rotate_robot(angle_degrees, rotation_speed, sens, thymio):
     wheel_circumference = 2 * math.pi * (wheel_distance / 2)
     distance_to_travel = (angle_radians / (2 * math.pi)) * wheel_circumference
     # Adjust motor speed
-    if (sens == 1): 
+    if (sens == "Left"): 
         motor_speed = rotation_speed
         motor_left_target = motor_speed - 5
         motor_right_target = -motor_speed 
-    if (sens == 2):
+    if (sens == "Right"):
         motor_speed = rotation_speed
         motor_left_target = -motor_speed
         motor_right_target = motor_speed + 3
@@ -38,7 +60,7 @@ def rotate_robot(angle_degrees, rotation_speed, sens, thymio):
     # set motor speed
     thymio.set_motors_PID(motor_left_target, motor_right_target)
     # waiting to travel the computer distance
-    time.sleep(distance_to_travel / (motor_speed*0.35))
+    time.sleep(distance_to_travel / (motor_speed*Rotate_Factor))
 
 # function to make the robot go forward
 def forward_robot(motor_speed,thymio):
@@ -53,11 +75,11 @@ def beginning_robot(motor_speed,thymio):
     motor_right_target = motor_speed
     thymio.set_motors_PID(motor_left_target,motor_right_target)
     
-def handle_obstacle_behind(path, special_cases,axe, target):
+def handle_obstacle_behind(path, special_cases,axe, special_step):
     if path[axe][2] == special_cases[axe][0]:
-        target = 1
+       special_step= 1
     elif path[axe][2] == special_cases[axe][1]:
-        target = 2
+       special_step= 2
     return target
 
 def handle_obstacle_left(position, obstacle_position):
@@ -66,11 +88,11 @@ def handle_obstacle_left(position, obstacle_position):
 def handle_obstacle_right(position, obstacle_position):
     return position[0] < obstacle_position[0]
 
-def navigate_obstacle(target, sens, k, thymio,obstacle_cooredinates,position,orientation,axe):
-    if (target == 1):
-        sens = 1
+def navigate_obstacle(special_step, sens, k, thymio,obstacle_cooredinates,position,orientation,axe):
+    if (special_step == 1):
+        sens = "Left"
     else :
-        sens = 2
+        sens = "Right"
     for point in obstacle_cooredinates:
         if orientation == -90 or  orientation == 0:
             sens = switch_sens(sens)
@@ -88,7 +110,7 @@ def navigate_obstacle(target, sens, k, thymio,obstacle_cooredinates,position,ori
             rotate_robot(90, 100, sens,thymio)
             forward_robot(100,thymio)
             time.sleep(4.5)
-    if target == 0:
+    if special_step == 0:
         if not Left:
             sens = switch_sens(sens)
         rotate_robot(90, 100, switch_sens(sens),thymio)
@@ -101,17 +123,17 @@ def navigate_obstacle(target, sens, k, thymio,obstacle_cooredinates,position,ori
     return k, state
 
 def handle_target_left(thymio):
-    rotate_robot(90, 100, 2,thymio)
+    rotate_robot(90, 100, "Right",thymio)
     forward_robot(100,thymio)
-    rotate_robot(90, 100, 1,thymio)
+    rotate_robot(90, 100, "Left",thymio)
     forward_robot(100,thymio)
     state = "orientation"
     return state
 
 def handle_target_right(thymio):
-    rotate_robot(90, 100, 1,thymio)
+    rotate_robot(90, 100, "Left",thymio)
     forward_robot(100,thymio)
-    rotate_robot(90, 100, 2,thymio)
+    rotate_robot(90, 100, "Right",thymio)
     forward_robot(100,thymio)
     state = "orientation"
     return state
@@ -120,10 +142,10 @@ def handle_target_state(path, k, axe, thymio):
     if path[axe][k] == path[axe][1]:
         state = "end"
     elif path[axe][1] > path[axe][k]:
-        rotate_robot(90, 100, 2,thymio)
+        rotate_robot(90, 100, "Right",thymio)
         state = "end"
     elif path[axe][1] < path[axe][k]:
-        rotate_robot(90, 100, 1,thymio)
+        rotate_robot(90, 100, "Left",thymio)
         state = "end"
     return state
     
@@ -148,7 +170,7 @@ async def local_nav(thymio):
     return obstacle
     
 def obstacle_function(path, position, angle, thymio,obstacle_cooredinates):
-    target = 0
+    special_step = 0
     status = 0
     orientation = 0
     if ((angle < -170) or (angle > 170) or (-10 < angle < 10)):
@@ -168,9 +190,9 @@ def obstacle_function(path, position, angle, thymio,obstacle_cooredinates):
     time.sleep(0.2)
     obstacle_position = path[:,0]
     if (np.floor(position[axe]) == path[axe][1]):
-        target = handle_obstacle_behind(path, special_cases,axe, target)
+        special_step = handle_obstacle_behind(path, special_cases,axe, special_step)
         state = "obstacle_behind"
-        if(target == 1) or (target == 2):
+        if(special_step == 1) or (special_step == 2):
             status = 4
         else:
             status = 3
@@ -183,7 +205,7 @@ def obstacle_function(path, position, angle, thymio,obstacle_cooredinates):
         state = "obstacle_right"
         status = 3
     if state == "obstacle_behind":
-        k, state = navigate_obstacle(target, 1, k, thymio,obstacle_cooredinates,position,orientation, axe)
+        k, state = navigate_obstacle(special_step, "Left", k, thymio,obstacle_cooredinates,position,orientation, axe)
     if state == "obstacle_left":
         state = handle_target_left(thymio)
     if state == "obstacle_right":
