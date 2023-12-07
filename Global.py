@@ -51,22 +51,24 @@ def A_Star(start, goal, h, coords, occupancy_grid, max_val_x = 17, max_val_y = 1
     :param start: start node (x, y)
     :param goal_m: goal node (x, y)
     :param occupancy_grid: the grid map
-    :param movement: select between 4-connectivity ('4N') and 8-connectivity ('8N', default)
+    :param movement_type: select between 4-connectivity ('4N') and 8-connectivity ('8N', default)
+    :param max_val_x : max value of the grid in y
+    :param max_val_y : max value of the grid in y
     :return: a tuple that contains: (the resulting path in meters, the resulting path in data array indices)
     """
 
     
     # Check if the start and goal are within the boundaries of the map
-    # [start, goal] form is :[(0, 0), (43, 33)]
+    # [start, goal] form is :[(x_start,y_start), (x_goal, y_goal)]
     for point in [start, goal]:
         assert point[0]>=0 and point[0]<max_val_x, "x-start or end goal not contained in the map"
         assert point[1]>=0 and point[1]<max_val_y, "y-start or end goal not contained in the map"
     
     # check if start and goal nodes correspond to free spaces
-    if occupancy_grid[start[0], start[1]]: #if the starting point is an occupied cell aka wall
-        raise Exception('Start node is not traversable')#big problem
+    if occupancy_grid[start[0], start[1]]: #if the starting point is occupied by an osbtacle 
+        raise Exception('Start node is not traversable')
 
-    if occupancy_grid[goal[0], goal[1]]:#Same for the end goal
+    if occupancy_grid[goal[0], goal[1]]:
         raise Exception('Goal node is not traversable')
     
     # get the possible movements corresponding to the selected connectivity
@@ -89,12 +91,12 @@ def A_Star(start, goal, h, coords, occupancy_grid, max_val_x = 17, max_val_y = 1
     cameFrom = dict()
 
     # For node n, gScore[n] is the cost of the cheapest path from start to n currently known.
-    #Pour l'instant gScore : {(0, 0): 0, (0, 1): inf, (0, 2): inf,...}
+    #Initial form : {(0, 0): 0, (0, 1): inf, (0, 2): inf,...}
     gScore = dict(zip(coords, [np.inf for x in range(len(coords))]))
     gScore[start] = 0
 
     # For node n, fScore[n] := gScore[n] + h(n). map with default value of Infinity
-    #Pour l'instant fScore : {(0, 0): 54.2, (0, 1): inf,..}
+    #Initial form : {(0, 0): val, (0, 1): inf,..}
     fScore = dict(zip(coords, [np.inf for x in range(len(coords))]))
     fScore[start] = h[start]
 
@@ -133,7 +135,7 @@ def A_Star(start, goal, h, coords, occupancy_grid, max_val_x = 17, max_val_y = 1
                 openSet.append(neighbor)
                 
             if tentative_gScore < gScore[neighbor]:
-                # This path to neighbor is better than any previous one. Record it!
+                # This path to neighbor is better than any previous one. Keep it in mind.
                 cameFrom[neighbor] = current
                 gScore[neighbor] = tentative_gScore
                 fScore[neighbor] = gScore[neighbor] + h[neighbor]
