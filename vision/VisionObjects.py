@@ -5,7 +5,6 @@ from enum import Enum
 from vision.utils import print_error
 from vision.constants import grid_height_cells, grid_width_cells
 
-# Define an enumeration class called Color
 class VisionObjectsTypes(Enum):
     GENERAL = 0
     OBSTACLE = 1
@@ -76,7 +75,7 @@ class VisionObject:
 
     def generate_label(self):
         text = type(self).__name__ + ", " + str(self.center_grid)
-        text_position = (self.center_pixel[0] - 100, self.center_pixel[1] + 50)
+        text_position = (self.center_pixel[0] - 100, self.center_pixel[1] + 100)
         return text, text_position, self.color
 
 

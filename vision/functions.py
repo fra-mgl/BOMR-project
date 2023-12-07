@@ -74,7 +74,7 @@ def thymio_recognition(env):
     """
     arucoDict = cv.aruco.Dictionary_get(cv.aruco.DICT_5X5_1000)
     arucoParams = cv.aruco.DetectorParameters_create()
-    positions, ids, rejected = cv.aruco.detectMarkers(env, arucoDict, parameters=arucoParams)
+    positions, ids, _ = cv.aruco.detectMarkers(env, arucoDict, parameters=arucoParams)
     # print("------------------")
     # print("thymio_recognition: markers found")
     # print("IDS:")
@@ -130,6 +130,27 @@ def prepare_output(thymio, obs, tar, g):
     return state, obs_grid, targets, goal
 
 
+def visualize_data(source, thymio, obstacles, targets, goal):
+    """
+    prepare data for visualization
+    :param source:
+    :param thymio:
+    :param obstacles:
+    :param targets:
+    :param goal:
+    :return out_img: image to show
+    """
+    out_img = source.copy()
+    out_img = utils.draw_on_image(out_img, obstacles)
+    out_img = utils.draw_on_image(out_img, targets)
+    out_img = utils.draw_on_image(out_img, goal)
+
+    if thymio is not None:
+        out_img = thymio.draw_thymio(out_img)
+
+    return out_img
+
+
 def env_init(source):
     """
     environment initialization: grid extraction, perspective transform and object recognition
@@ -140,15 +161,16 @@ def env_init(source):
     :return obs_grid: occupation grid (1 if obstacle, 0 if free)
     :return targets: list of targets
     :return goal: list of goals
+    :return out_img: image to visualize results
     """
     grid_corners, _, flag = detection.grid_extraction(source)
     if not flag:
-        return flag, None, None, None, None, None
+        return flag, None, None, None, None, None, None
     # perspective transform
     grid = perspective(source, grid_corners)
     flag, obs, tar, g = recognition(grid)
     if not flag:
-        return flag, None, None, None, None, None
+        return flag, None, None, None, None, None, None
 
     # PREPARE DATA
     # obstacles
@@ -167,7 +189,10 @@ def env_init(source):
     for gg in g:
         goal.append(gg.center_grid)
 
-    return flag, grid, obs, obs_grid, targets, goal
+    # create an image for a visualization of the result
+    out_img = visualize_data(grid, None, obs, tar, g)
+
+    return flag, grid, obs, obs_grid, targets, goal, out_img
 
 
 # -----------------------------------------------------------------------------------------------
@@ -185,14 +210,14 @@ def vision_init(cap):
 
     for _ in range(constants.REP):
             _, env = cap.read()
-            flag, grid, obs, obs_grid, targets, goal = env_init(env)
+            flag, grid, obs, obs_grid, targets, goal, out_img = env_init(env)
             if flag:
                 break
 
     if not flag:
         utils.print_error("Error in vision.functions.vision_init: cannot initialize vision")
-        return False, None, None, None, None, None
-    return flag, grid, obs, obs_grid, targets, goal
+        return False, None, None, None, None, None, None
+    return flag, grid, obs, obs_grid, targets, goal, out_img
 
 
 def get_thymio(cap):
@@ -227,36 +252,4 @@ def get_thymio(cap):
     return True, thymio, (thymio.state[0]+0.5, thymio.state[1], thymio.state[2])
 
 
-def visualize_data(source, thymio, obstacles, obs_grid, targets, goal):
-    """
-    prepare data for visualization
-    :param source:
-    :param thymio:
-    :param obstacles:
-    :param obs_grid:
-    :param targets:
-    :param goal:
-    :return out_img: image to show
-    :return out_text: text to show
-    """
-    out_img = source.copy()
-    out_img = utils.draw_on_image(out_img, obstacles, True)
-    out_img = utils.draw_on_image(out_img, targets, True)
-    out_img = utils.draw_on_image(out_img, goal, True)
-
-    out_text = "Obstacles (" + str(np.count_nonzero(obs_grid == 1)) + "): \n"
-    out_text += str(obs_grid) + "\n"
-    out_text += "Targets (" + str(len(targets)) + "): " + str(targets) + "\n"
-    out_text += "Goal (" + str(len(targets)) + "): " + str(goal) + "\n"
-
-    if thymio is not None:
-        out_img = thymio.draw_thymio(out_img)
-        out_text += "State: " + str(thymio.state) + "\n"
-    # print("State: " + str(state))
-    # print("Obstacles (" + str(np.count_nonzero(obs_grid == 1)) + "): ")
-    # print(obs_grid)
-    # print("Targets (" + str(len(targets)) + "): " + str(targets))
-    # print("Goal (" + str(len(targets)) + "): " + str(goal))
-
-    return out_img, out_text
 

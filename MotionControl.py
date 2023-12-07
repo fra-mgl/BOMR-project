@@ -4,7 +4,7 @@ from IPython.display import display
 
 
 # PID Controller parameters
-kp = 2.0  # Proportional gain
+kp = 3.0  # Proportional gain
 ki = 0.04  # Integral gain
 kd = 0.01  # Derivative gain
 robot_width = 0.1  # Width between the two wheels
@@ -64,18 +64,18 @@ def pid_controller(integral, angle, previous_error,dt):
         derivative = 0
     correction = proportional + integral + derivative
     # if angle is big enough, correction is more aggressive (meaning we need to perform a turn)
-    if abs(angle) > 30:
-        if (abs(correction) < 300) :
-            updated_left_speed = - np.floor(correction)
-            updated_right_speed = np.floor(correction)
-        else :
-            # cropping speed
-            updated_left_speed = -350
-            updated_right_speed = 350
+    if abs(angle) > 70:
+        # if (abs(correction) < 350) :
+        updated_left_speed = - np.floor(correction)
+        updated_right_speed = np.floor(correction)
+        # else :
+        #     # cropping speed
+        #     updated_left_speed = -350
+        #     updated_right_speed = 350
         turning = True
     else :
-        updated_left_speed = 80 - np.floor(correction/1.3)
-        updated_right_speed = 80 + np.floor(correction/1.3)
+        updated_left_speed = 80 - np.floor(correction)
+        updated_right_speed = 80 + np.floor(correction)
         turning = False
 
     return updated_left_speed,updated_right_speed, integral, angle, turning

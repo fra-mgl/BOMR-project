@@ -80,7 +80,7 @@ def handle_obstacle_behind(path, special_cases,axe, special_step):
        special_step= 1
     elif path[axe][2] == special_cases[axe][1]:
        special_step= 2
-    return target
+    return special_step
 
 def handle_obstacle_left(position, obstacle_position):
     return position[0] > obstacle_position[0]
@@ -189,6 +189,11 @@ def obstacle_function(path, position, angle, thymio,obstacle_cooredinates):
     k = 2
     time.sleep(0.2)
     obstacle_position = path[:,0]
+    print("path", path)
+    print("position",position)
+    print("obstacle", obstacle_position)
+    print("comp1", position[axe])
+    print("comp2", path[axe][1])
     if (np.floor(position[axe]) == path[axe][1]):
         special_step = handle_obstacle_behind(path, special_cases,axe, special_step)
         state = "obstacle_behind"
