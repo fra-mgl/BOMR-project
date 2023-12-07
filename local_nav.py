@@ -2,24 +2,6 @@ import time
 import math
 import numpy as np
 
-# xi=0
-# yi=0
-# xt=0
-# yt=2
-# xnt=-1
-# ynt=2
-# xnnt=-2
-# ynnt=2
-# # initial position : position in front of the obstacle 
-# position = [xi,yi]
-# # coordinates of the next steps in the global path
-# xp=[xt,xnt,xnnt]
-# yp=[yt,ynt,ynnt]
-# # list of coordinates that we obtain from the global navigation
-# path = [xp,yp]
-# # the 2 special cases where it is more effective to directly go on this case
-
-
 def switch_sens(sens):
     if(sens == 1):
         sens = 2
@@ -36,14 +18,14 @@ def switch_axe(axe):
     return axe
 
 def rotate_robot(angle_degrees, rotation_speed, sens, thymio):
-    # Convertir l'angle en radians
+    # convert the angle to radians
     angle_radians = math.radians(angle_degrees)
 
-    # Calculer la distance que chaque roue doit parcourir
+    # Calculate the distance each wheel must travel
     wheel_distance = 5  # Remplacez par la distance réelle entre les roues de votre robot
     wheel_circumference = 2 * math.pi * (wheel_distance / 2)
     distance_to_travel = (angle_radians / (2 * math.pi)) * wheel_circumference
-    # Ajuster la vitesse des moteurs pour faire tourner le robot
+    # Adjust motor speed
     if (sens == 1): 
         motor_speed = rotation_speed
         motor_left_target = motor_speed - 5
@@ -52,12 +34,11 @@ def rotate_robot(angle_degrees, rotation_speed, sens, thymio):
         motor_speed = rotation_speed
         motor_left_target = -motor_speed
         motor_right_target = motor_speed + 3
-    # Inverser la vitesse du moteur droit pour tourner
 
-    # Définir les variables des moteurs
+    # set motor speed
     thymio.set_motors_PID(motor_left_target, motor_right_target)
     time.sleep(2)
-    # Attendez que le robot ait tourné la distance souhaitée
+    # waiting to travel the computer distance
     time.sleep(distance_to_travel / motor_speed)
 
 # function to make the robot go forward
@@ -74,10 +55,6 @@ def beginning_robot(motor_speed,thymio):
     thymio.set_motors_PID(motor_left_target,motor_right_target)
     
 def handle_obstacle_behind(path, special_cases,axe, target):
-    #for j in range(len(path)):
-    print('case ', path[axe][2])
-    print('special case', special_cases[axe][0])
-    print('2special case', special_cases[axe][1])
     if path[axe][2] == special_cases[axe][0]:
         target = 1
     elif path[axe][2] == special_cases[axe][1]:
@@ -85,19 +62,15 @@ def handle_obstacle_behind(path, special_cases,axe, target):
     return target
 
 def handle_obstacle_left(position, obstacle_position):
-    print('je suis dans handle left')
     return position[0] > obstacle_position[0]
 
 def handle_obstacle_right(position, obstacle_position):
     return position[0] < obstacle_position[0]
 
 def navigate_obstacle(target, sens, k, thymio,obstacle_cooredinates,position,orientation,axe):
-    print(f"target behind obstacle, obstacle {'à droite' if target == 1 else 'à gauche'}")
     if (target == 1):
-        print("obstacle à droite")
         sens = 1
     else :
-        print("obstacle à gauche") 
         sens = 2
     for point in obstacle_cooredinates:
         if orientation == -90 or  orientation == 0:
@@ -117,10 +90,8 @@ def navigate_obstacle(target, sens, k, thymio,obstacle_cooredinates,position,ori
             forward_robot(100,thymio)
             time.sleep(4.5)
     if target == 0:
-        print('left', Left)
         if not Left:
             sens = switch_sens(sens)
-        print("path est bien derrière")
         rotate_robot(90, 100, switch_sens(sens),thymio)
         forward_robot(100,thymio)
         rotate_robot(90, 100, sens,thymio)
@@ -131,7 +102,6 @@ def navigate_obstacle(target, sens, k, thymio,obstacle_cooredinates,position,ori
     return k, state
 
 def handle_target_left(thymio):
-    print("target à gauche")
     rotate_robot(90, 100, 2,thymio)
     forward_robot(100,thymio)
     rotate_robot(90, 100, 1,thymio)
@@ -140,30 +110,20 @@ def handle_target_left(thymio):
     return state
 
 def handle_target_right(thymio):
-    print("target à droite")
     rotate_robot(90, 100, 1,thymio)
-    print("j'ai tourné")
     forward_robot(100,thymio)
-    print("j'ai avancé")
     rotate_robot(90, 100, 2,thymio)
-    print("j'ai tourné")
     forward_robot(100,thymio)
-    print("c'est fini")
     state = "orientation"
     return state
 
 def handle_target_state(path, k, axe, thymio):
-    print('k', k)
     if path[axe][k] == path[axe][1]:
-        print("je fais rien : ", path[axe][k], " PATH 0 0 : ", path[axe][1])
         state = "end"
     elif path[axe][1] > path[axe][k]:
-        print("je tourne à droite", path[axe][1], "PATH 0", path[axe][k])
         rotate_robot(90, 100, 2,thymio)
         state = "end"
     elif path[axe][1] < path[axe][k]:
-        print("je tourne à gauche", path[axe][1], "PATH 0", path[axe][k])
-        print("je dois tourner")
         rotate_robot(90, 100, 1,thymio)
         state = "end"
     return state
@@ -208,9 +168,6 @@ def obstacle_function(path, position, angle, thymio,obstacle_cooredinates):
     k = 2
     time.sleep(0.2)
     obstacle_position = path[:,0]
-    print('obstACLE', obstacle_position)
-    print('position', position[axe])
-    print('next_step', path)
     if (np.floor(position[axe]) == path[axe][1]):
         target = handle_obstacle_behind(path, special_cases,axe, target)
         state = "obstacle_behind"
@@ -219,8 +176,6 @@ def obstacle_function(path, position, angle, thymio,obstacle_cooredinates):
         else:
             status = 3
     if (np.floor(position[axe]) > path[axe][1]):
-        print("obstacle position ", obstacle_position)
-        print('position', position)
         handle_obstacle_left(position, obstacle_position)
         state = "obstacle_left"
         status = 3

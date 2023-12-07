@@ -79,11 +79,11 @@ def colored_object_extraction(image, color):
     Do you need all the points on the line to represent that line? No, we need just two end points of that line.
     This is what cv.CHAIN_APPROX_SIMPLE does. It removes all redundant points and compresses the contour, thereby saving memory."""
     # find contours
-    ret, thresh = cv.threshold(mask, 40, 255, 0)
+    _, thresh = cv.threshold(mask, 40, 255, 0)
     if int(cv.__version__[0]) > 3:
-        contours, hierarchy = cv.findContours(thresh, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+        contours, _ = cv.findContours(thresh, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
     else:
-        _, contours, hierarchy = cv.findContours(thresh, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
+        _, contours, _ = cv.findContours(thresh, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_NONE)
 
     return contours
 

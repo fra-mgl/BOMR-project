@@ -1,7 +1,5 @@
 import math
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib import colors
 
 def _get_movements_4n():
     """
@@ -56,22 +54,13 @@ def A_Star(start, goal, h, coords, occupancy_grid, max_val_x = 17, max_val_y = 1
     :param movement: select between 4-connectivity ('4N') and 8-connectivity ('8N', default)
     :return: a tuple that contains: (the resulting path in meters, the resulting path in data array indices)
     """
-    print("Coords inside Astar: ", coords)
-    # -----------------------------------------
-    # DO NOT EDIT THIS PORTION OF CODE
-    # -----------------------------------------
+
     
     # Check if the start and goal are within the boundaries of the map
     # [start, goal] form is :[(0, 0), (43, 33)]
     for point in [start, goal]:
-        #In 2D we have 4 points
-        print("Point: ", point)
         assert point[0]>=0 and point[0]<max_val_x, "x-start or end goal not contained in the map"
         assert point[1]>=0 and point[1]<max_val_y, "y-start or end goal not contained in the map"
-        # for coord in point: #going to go threw : 0 0 43 33
-        #     #coord should be > or = 0 and inferiot to max_val if not assert raises an AssertionError
-        #     assert coord>=0 and coord<max_val_x, "x-start or end goal not contained in the map"
-        #     assert coord>=0 and coord<max_val_y, "y-start or end goal not contained in the map"
     
     # check if start and goal nodes correspond to free spaces
     if occupancy_grid[start[0], start[1]]: #if the starting point is an occupied cell aka wall
@@ -87,10 +76,7 @@ def A_Star(start, goal, h, coords, occupancy_grid, max_val_x = 17, max_val_y = 1
         movements = _get_movements_8n()
     else:
         raise ValueError('Unknown movement')
-    
-    # --------------------------------------------------------------------------------------------
-    # A* Algorithm implementation - feel free to change the structure / use another pseudo-code
-    # --------------------------------------------------------------------------------------------
+
     
     # The set of visited nodes that need to be (re-)expanded, i.e. for which the neighbors need to be explored
     # Initially, only the start node is known.
@@ -116,12 +102,10 @@ def A_Star(start, goal, h, coords, occupancy_grid, max_val_x = 17, max_val_y = 1
     while openSet != []:
         
         #the node in openSet having the lowest fScore[] value
-        #On prend les coords dans Openset on regarde s'ils matchent avec des keys du fScore
-        #Pour la premiere iteration on a {(0, 0): 54.2}
         fScore_openSet = {key:val for (key,val) in fScore.items() if key in openSet}
-        #On selectionne la plus petite valeur de fScore et on garde la coord du point en question dans current
+        #get the lowest value of fScore and save the corresponding coordinate
         current = min(fScore_openSet, key=fScore_openSet.get)
-        del fScore_openSet #On vide le fScore_openSet
+        del fScore_openSet
         
         #If the goal is reached, reconstruct and return the obtained path
         if current == goal:
@@ -129,12 +113,10 @@ def A_Star(start, goal, h, coords, occupancy_grid, max_val_x = 17, max_val_y = 1
 
         openSet.remove(current)
         closedSet.append(current)
-        #Une fois qu'on a trouve le node avec le fScore le plus avangateux
         #for each neighbor of current:
         for dx, dy, deltacost in movements:
             
-            neighbor = (current[0]+dx, current[1]+dy) #cree une liste des 4 ou 8 voisins selon le choix
-            print("Neighbor: ", neighbor)
+            neighbor = (current[0]+dx, current[1]+dy)
             # if the node is not in the map, skip
             if (neighbor[0] >= occupancy_grid.shape[0]) or (neighbor[1] >= occupancy_grid.shape[1]) or (neighbor[0] < 0) or (neighbor[1] < 0):
                 continue
@@ -157,5 +139,4 @@ def A_Star(start, goal, h, coords, occupancy_grid, max_val_x = 17, max_val_y = 1
                 fScore[neighbor] = gScore[neighbor] + h[neighbor]
 
     # Open set is empty but goal was never reached
-    print("No path found to goal")
     return [], closedSet

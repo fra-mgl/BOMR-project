@@ -183,10 +183,8 @@ class Thymio():
         theta1 = np.rad2deg(theta1)
         theta2 = np.rad2deg(theta2)
 
-        print("Before: ", theta1, theta2)
         theta1 = fix_theta(theta1)
         theta2 = fix_theta(theta2)
-        print("After: ", theta1, theta2)
 
         theta = (theta1 + theta2) / 2
 
@@ -247,10 +245,12 @@ class Thymio():
 
 
 def fix_theta(th):
-
+    """
+    change frame of reference when computing the orientation of the robot
+    :param th: orientation of the robot
+    :return: orientation of the robot in the new frame of reference
+    """
     th = -th
-
     new_theta = th + 90
      
-
     return new_theta

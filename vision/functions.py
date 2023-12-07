@@ -185,7 +185,6 @@ def vision_init(cap):
 
     for _ in range(constants.REP):
             _, env = cap.read()
-            # utils.display_image("", env)
             flag, grid, obs, obs_grid, targets, goal = env_init(env)
             if flag:
                 break
@@ -211,7 +210,6 @@ def get_thymio(cap):
         _, env = cap.read()
         grid_corners, _, flag_grid = detection.grid_extraction(env)
         if not flag_grid:
-            # sleep(0.2)
             continue
         # perspective transform
         grid = perspective(env, grid_corners)
@@ -245,13 +243,15 @@ def visualize_data(source, thymio, obstacles, obs_grid, targets, goal):
     out_img = utils.draw_on_image(out_img, obstacles, True)
     out_img = utils.draw_on_image(out_img, targets, True)
     out_img = utils.draw_on_image(out_img, goal, True)
-    out_img = thymio.draw_thymio(out_img)
 
-    out_text = "State: " + str(thymio.state) + "\n"
-    out_text += "Obstacles (" + str(np.count_nonzero(obs_grid == 1)) + "): \n"
+    out_text = "Obstacles (" + str(np.count_nonzero(obs_grid == 1)) + "): \n"
     out_text += str(obs_grid) + "\n"
     out_text += "Targets (" + str(len(targets)) + "): " + str(targets) + "\n"
     out_text += "Goal (" + str(len(targets)) + "): " + str(goal) + "\n"
+
+    if thymio is not None:
+        out_img = thymio.draw_thymio(out_img)
+        out_text += "State: " + str(thymio.state) + "\n"
     # print("State: " + str(state))
     # print("Obstacles (" + str(np.count_nonzero(obs_grid == 1)) + "): ")
     # print(obs_grid)

@@ -13,30 +13,32 @@ class KalmanFilter(object):
                         [0, 0.04, 0, 0],
                         [0, 0, 6, 0],
                         [0, 0, 0, 6]])  # process uncertainty
-        self.H = np.zeros((dim_z, dim_x))  # measurement matrix
-        self.R = np.eye(dim_z)  # measurement uncertainty
-
+        self.H = np.array([[1, 0, 0, 0],
+                        [0, 1, 0, 0],
+                        [0, 0, 1, 0],
+                        [0, 0, 0, 1]])  # measurement matrix
+        self.R = np.array([[0.25, 0, 0, 0],
+                        [0, 0.25, 0, 0],
+                        [0, 0, 6, 0],
+                        [0, 0, 0, 6]])  # measurement uncertainty
+        
         self.x_est = np.zeros((dim_x, 1))  # state estimate
         self.P_est = np.eye(dim_x) * 1000  # state covariance estimate
+
         self.speed_conv_factor = 0.2  # conversion factor for speed
+        self.wheel_width = 50 # distance between the two wheels in mm
+        self.time_normalizatin_factor = 5.5
         
 
     def compute_x_y_speed(self, left_motor_speed, right_motor_speed, angle,time_difference):
         # Compute the linear speed of the robot
-        # delta = abs(left_motor_speed - right_motor_speed)
-        # if delta < 10:
-        #     print("-------------Delta found-------------")
-        #     left_motor_speed = right_motor_speed
-        robot_wheel_width = 5
         linear_speed = (left_motor_speed + right_motor_speed) * self.speed_conv_factor / 2.0
-        angular_speed = -(left_motor_speed - right_motor_speed) * self.speed_conv_factor / (10*robot_wheel_width)
+        angular_speed = -(left_motor_speed - right_motor_speed) * self.speed_conv_factor / (self.wheel_width)
         delta_angle = angular_speed * time_difference
         angle = angle + np.degrees(delta_angle)
-        # if abs(delta_angle) < 0.10: delta_angle = 0
+
+        # Compute the direction vector of the robot
         rad_angle = np.radians(angle)
-        #rad_angle = rad_angle + delta_angle
-        print("-------------delta ", np.degrees(delta_angle))
-        #print("-------------cos ", np.cos(round(np.radians(angle))))
         cosine = np.cos(rad_angle)
         if abs(cosine) < 0.15: cosine = 0
         sine = np.sin(rad_angle)
@@ -48,13 +50,13 @@ class KalmanFilter(object):
         y_speed = linear_speed*new_direction_vector[1] 
         speed =  [x_speed,y_speed]
 
-        print("-------------New dir:", new_direction_vector)
-        # angle = np.degrees(rad_angle)
-        return speed,new_direction_vector,angle 
+        angle = np.degrees(rad_angle)
+        return speed, new_direction_vector, angle 
          
 
     def predict(self, x_est_prev, P_est_prev, speed, direction, time_difference):
-        dt = time_difference/5.5
+        dt = time_difference/self.time_normalizatin_factor
+        # matrix A is dynamic - compute each time taking into account the time difference between each prediction step
         self.A = np.array([[1, 0, dt, 0],
                         [0, 1, 0, dt],
                         [0, 0, 1, 0],
@@ -63,20 +65,9 @@ class KalmanFilter(object):
         self.P_est = np.dot(np.dot(self.A, P_est_prev), self.A.T)
         self.P_est = self.P_est + self.Q if type(self.Q) != type(None) else self.P_est
 
-        # Update based on the measured speed and orientation
-        self.H = np.array([[1, 0, 0, 0],
-                        [0, 1, 0, 0],
-                        [0, 0, 1, 0],
-                        [0, 0, 0, 1]])  # Update measurement matrix
-        self.R = np.array([[0.25, 0, 0, 0],
-                        [0, 0.25, 0, 0],
-                        [0, 0, 6, 0],
-                        [0, 0, 0, 6]])  # Update measurement uncertainty
-
         # Convert orientation to a direction vector
         speed_array = np.array([speed[0], speed[1]])
 
-        # Measurement vector based on speed and orientation
         # Measurement vector based on speed and orientation
         y = np.dot(self.H, self.x_est)
 
@@ -84,9 +75,6 @@ class KalmanFilter(object):
         y[2] = abs(direction[0]) * speed_array[0] * self.speed_conv_factor // 10
         y[3] = abs(direction[1]) * speed_array[1] * self.speed_conv_factor// 10
 
-        # print("direction : \n", direction)
-        # print("Speed Array : \n", speed_array.T)
-        # print(" Y VECTOR : \n", y)
         # Innovation / measurement residual
         i = y - np.dot(self.H, self.x_est)
 
@@ -102,9 +90,6 @@ class KalmanFilter(object):
 
         # Extracting relevant information for the output
         estimated_position = self.x_est[:2].flatten()
-        estimated_speed = np.linalg.norm(self.x_est[2:])
         estimated_direction = direction.flatten()
 
-        # print("The new X_Prev is : \n", self.x_est)
-
-        return estimated_position, speed , self.x_est, self.P_est,estimated_direction
+        return estimated_position, speed , self.x_est, self.P_est, estimated_direction
