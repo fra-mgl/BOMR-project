@@ -101,7 +101,7 @@ def determine_special_path(path, special_cases,axe, special_step):
        special_step= 2
     return special_step
 
-def navigate_obstacle(special_step, sens, k, thymio,obstacle_coordinates,position,orientation,axe):
+def handle_target_behind(special_step, sens, k, thymio,obstacle_coordinates,position,orientation,axe):
     """
     Navigates the Thymio robot around an obstacle based on specified conditions.
     :param special_step: A value indicating a special step condition.
@@ -310,7 +310,7 @@ def obstacle_function(path, position, angle, thymio,obstacle_coordinates):
 
     # Handle obstacle navigation based on the detected state
     if state == "obstacle_behind":
-        k, state = navigate_obstacle(special_step, "Right", k, thymio,obstacle_coordinates,position,orientation, axe)
+        k, state = handle_target_behind(special_step, "Right", k, thymio,obstacle_coordinates,position,orientation, axe)
     if state == "obstacle_left":
         state = handle_target_left(thymio)
     if state == "obstacle_right":
