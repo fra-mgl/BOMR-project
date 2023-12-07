@@ -22,7 +22,7 @@ def rotate_robot(angle_degrees, rotation_speed, sens, thymio):
     angle_radians = math.radians(angle_degrees)
 
     # Calculate the distance each wheel must travel
-    wheel_distance = 5  # Remplacez par la distance réelle entre les roues de votre robot
+    wheel_distance = 100  # Remplacez par la distance réelle entre les roues de votre robot
     wheel_circumference = 2 * math.pi * (wheel_distance / 2)
     distance_to_travel = (angle_radians / (2 * math.pi)) * wheel_circumference
     # Adjust motor speed
@@ -37,9 +37,8 @@ def rotate_robot(angle_degrees, rotation_speed, sens, thymio):
 
     # set motor speed
     thymio.set_motors_PID(motor_left_target, motor_right_target)
-    time.sleep(2)
     # waiting to travel the computer distance
-    time.sleep(distance_to_travel / motor_speed)
+    time.sleep(distance_to_travel / (motor_speed*0.35))
 
 # function to make the robot go forward
 def forward_robot(motor_speed,thymio):
