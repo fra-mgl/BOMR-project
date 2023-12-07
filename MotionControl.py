@@ -36,6 +36,23 @@ class Control(object):
         }
         aw(self.node.set_variables(motors))
 
+    # --------- LEDs AND SOUND --------- #
+    def set_LEDs(self, color):
+        if color == "red":
+            c = [ 255, 0, 0]
+        elif color == "blue":
+            c = [ 0, 0, 255]
+        elif color == "green":
+            c = [ 0, 255, 0]
+        else:
+            c = [ 0, 0, 0]
+        leds = {
+            "leds.top": c,
+            "leds.bottom.right": c,
+            "leds.bottom.left": c
+        }
+        aw(self.node.set_variables(leds))
+
 
 # --------- PID CONTROLLER --------- #
 def pid_controller(integral, angle, previous_error,dt):
@@ -72,4 +89,3 @@ def normalize_angle(alpha):
     elif alpha < -180:
         alpha += 360  
     return alpha
-
